@@ -22,8 +22,18 @@ func main() {
 	updates, err := bot.GetUpdatesChan(ucfg)
 
 	for update := range updates {
-		if update.Message == nil || strings.HasPrefix(update.Message.Text, "/") {
+		if update.Message == nil {
 			continue
+		}
+
+		if strings.HasPrefix(update.Message.Text, "/") {
+			log.Printf("Command: %s", update.Message.Text)
+			switch update.Message.Text {
+			case startCommand:
+				msg := reply(update, randString(startAnswers))
+				bot.Send(msg)
+				continue
+			}
 		}
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
