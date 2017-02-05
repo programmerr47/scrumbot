@@ -9,7 +9,11 @@ func ReplySame(update tgbotapi.Update) tgbotapi.MessageConfig {
 }
 
 func reply(update tgbotapi.Update, text string) tgbotapi.MessageConfig {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
+	msg := message(update, text)
 	msg.ReplyToMessageID = update.Message.MessageID
 	return msg
+}
+
+func message(update tgbotapi.Update, text string) tgbotapi.MessageConfig {
+	return tgbotapi.NewMessage(update.Message.Chat.ID, text)
 }

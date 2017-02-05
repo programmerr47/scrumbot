@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/Syfaro/telegram-bot-api"
 	"log"
-	"strings"
 )
 
 func main() {
@@ -26,14 +25,26 @@ func main() {
 			continue
 		}
 
-		if strings.HasPrefix(update.Message.Text, "/") {
+		if update.Message.IsCommand() {
 			log.Printf("Command: %s", update.Message.Text)
-			switch update.Message.Text {
+			switch update.Message.Command() {
 			case startCommand:
 				msg := reply(update, randString(startAnswers))
 				bot.Send(msg)
 				continue
 			}
+		}
+
+		if update.Message.NewChatMember != nil && update.Message.NewChatMember.UserName != "" {
+			msg := message(update, formatIfHas(randString(newMemberAnswers), update.Message.NewChatMember.UserName))
+			bot.Send(msg)
+			continue
+		}
+
+		if update.Message.LeftChatMember != nil && update.Message.LeftChatMember.UserName != "" {
+			msg := message(update, formatIfHas(randString(leftMemberAnswers), update.Message.LeftChatMember.UserName))
+			bot.Send(msg)
+			continue
 		}
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)

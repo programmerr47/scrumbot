@@ -1,4 +1,4 @@
 package main
 
-const startCommand = "/start"
-const helpCommand = "/help"
+const startCommand = "start"
+const helpCommand = "help"
