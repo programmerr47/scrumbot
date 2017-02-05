@@ -27,18 +27,19 @@ func main() {
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
+
+		var msg = ReplySame(update)
 		if update.Message.IsCommand() {
 			log.Printf("Command: %s", update.Message.Text)
 			switch update.Message.Command() {
-			case startCommand:
-				msg := reply(update, randString(startAnswers))
-				bot.Send(msg)
-				continue
+				case startCommand:
+					msg = reply(update, randString(startAnswers))
+				case helpCommand:
+					msg = message(update, helpAnswer)
+			    default:
+					continue
 			}
-		}
-
-		var msg = ReplySame(update)
-		if update.Message.NewChatMember != nil && update.Message.NewChatMember.UserName != "" {
+		} else if update.Message.NewChatMember != nil && update.Message.NewChatMember.UserName != "" {
 			msg = messageWithMention(update, *update.Message.NewChatMember, newMemberAnswers)
 		} else if update.Message.LeftChatMember != nil && update.Message.LeftChatMember.UserName != "" {
 			msg = messageWithMention(update, *update.Message.LeftChatMember, leftMemberAnswers)
