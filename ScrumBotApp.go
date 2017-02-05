@@ -25,6 +25,8 @@ func main() {
 			continue
 		}
 
+		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+
 		if update.Message.IsCommand() {
 			log.Printf("Command: %s", update.Message.Text)
 			switch update.Message.Command() {
@@ -35,21 +37,25 @@ func main() {
 			}
 		}
 
+		var msg = ReplySame(update)
 		if update.Message.NewChatMember != nil && update.Message.NewChatMember.UserName != "" {
-			msg := message(update, formatIfHas(randString(newMemberAnswers), update.Message.NewChatMember.UserName))
-			bot.Send(msg)
-			continue
+			msg = messageWithMention(update, *update.Message.NewChatMember, newMemberAnswers)
+		} else if update.Message.LeftChatMember != nil && update.Message.LeftChatMember.UserName != "" {
+			msg = messageWithMention(update, *update.Message.LeftChatMember, leftMemberAnswers)
 		}
 
-		if update.Message.LeftChatMember != nil && update.Message.LeftChatMember.UserName != "" {
-			msg := message(update, formatIfHas(randString(leftMemberAnswers), update.Message.LeftChatMember.UserName))
-			bot.Send(msg)
-			continue
-		}
-
-		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-		msg := ReplySame(update)
 		bot.Send(msg)
+	}
+}
+
+func messageWithMention(update tgbotapi.Update, user tgbotapi.User, answers []string) tgbotapi.MessageConfig {
+	return message(update, formatIfHas(randString(answers), mentionString(user)))
+}
+
+func mentionString(user tgbotapi.User) string {
+	if user.FirstName != "" {
+		return user.FirstName
+	} else {
+		return user.UserName
 	}
 }
