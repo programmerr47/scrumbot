@@ -26,27 +26,29 @@ func main() {
 		}
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-
-		var msg = ReplySame(update)
-		if update.Message.IsCommand() {
-			log.Printf("Command: %s", update.Message.Text)
-			switch update.Message.Command() {
-				case startCommand:
-					msg = reply(update, randString(startAnswers))
-				case helpCommand:
-					msg = message(update, helpAnswer)
-			    default:
-					continue
-			}
-		} else if update.Message.NewChatMember != nil && update.Message.NewChatMember.UserName != "" {
-			msg = messageWithMention(update, *update.Message.NewChatMember, newMemberAnswers)
-		} else if update.Message.LeftChatMember != nil && update.Message.LeftChatMember.UserName != "" {
-			msg = messageWithMention(update, *update.Message.LeftChatMember, leftMemberAnswers)
-		}
-
-		bot.Send(msg)
+		go analyzeUpdate(update, *bot)
 	}
+}
+
+func analyzeUpdate(update tgbotapi.Update, bot tgbotapi.BotAPI) {
+	var msg = ReplySame(update)
+	if update.Message.IsCommand() {
+		log.Printf("Command: %s", update.Message.Text)
+		switch update.Message.Command() {
+		case startCommand:
+			msg = message(update, randString(startAnswers))
+		case helpCommand:
+			msg = message(update, helpAnswer)
+		default:
+			return
+		}
+	} else if update.Message.NewChatMember != nil && update.Message.NewChatMember.UserName != "" {
+		msg = messageWithMention(update, *update.Message.NewChatMember, newMemberAnswers)
+	} else if update.Message.LeftChatMember != nil && update.Message.LeftChatMember.UserName != "" {
+		msg = messageWithMention(update, *update.Message.LeftChatMember, leftMemberAnswers)
+	}
+
+	bot.Send(msg)
 }
 
 func messageWithMention(update tgbotapi.Update, user tgbotapi.User, answers []string) tgbotapi.MessageConfig {
