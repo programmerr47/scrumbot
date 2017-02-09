@@ -3,10 +3,20 @@ package main
 import (
 	"github.com/Syfaro/telegram-bot-api"
 	"log"
+	"github.com/BurntSushi/toml"
+	"fmt"
 )
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("318390328:AAHHKf7vTCC0hWnrG5N2IGQaQ3-ySxd44zQ")
+	var config Config
+	_, err := toml.DecodeFile(`config.tolm`, &config)
+	fmt.Println(config)
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	bot, err := tgbotapi.NewBotAPI(config.BotToken)
 
 	if err != nil {
 		log.Panic(err)
