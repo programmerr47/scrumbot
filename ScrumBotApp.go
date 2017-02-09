@@ -1,26 +1,25 @@
 package main
 
 import (
-	"github.com/Syfaro/telegram-bot-api"
 	"log"
-	"github.com/BurntSushi/toml"
 	"fmt"
+	"database/sql"
+	"github.com/BurntSushi/toml"
+	"github.com/Syfaro/telegram-bot-api"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	var config Config
 	_, err := toml.DecodeFile(`config.tolm`, &config)
 	fmt.Println(config)
+	checkErr(err)
 
-	if err != nil {
-		log.Panic(err)
-	}
+	//temp
+	applyTestConnectionToDatabase(config)
 
 	bot, err := tgbotapi.NewBotAPI(config.BotToken)
-
-	if err != nil {
-		log.Panic(err)
-	}
+	checkErr(err)
 
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
@@ -38,6 +37,22 @@ func main() {
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		go analyzeUpdate(update, *bot)
 	}
+}
+
+func applyTestConnectionToDatabase(config Config) {
+	db, err := sql.Open("sqlite3", config.DB + "/test.db")
+	defer db.Close()
+	checkErr(err)
+
+	err = db.Ping()
+	checkErr(err)
+
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS testTable(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		test_content TEXT
+	)`)
+	checkErr(err)
 }
 
 func analyzeUpdate(update tgbotapi.Update, bot tgbotapi.BotAPI) {
@@ -70,5 +85,11 @@ func mentionString(user tgbotapi.User) string {
 		return user.FirstName
 	} else {
 		return user.UserName
+	}
+}
+
+func checkErr(err error) {
+	if err != nil {
+		log.Panic(err)
 	}
 }
