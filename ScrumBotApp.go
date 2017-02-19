@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/Syfaro/telegram-bot-api"
 	_ "github.com/mattn/go-sqlite3"
+	"time"
 )
 
 func main() {
@@ -16,7 +17,10 @@ func main() {
 	checkErr(err)
 
 	//temp
-	applyTestConnectionToDatabase(config)
+	db := applyTestConnectionToDatabase(config)
+	defer db.Close()
+
+	initDatabase(db)
 
 	bot, err := tgbotapi.NewBotAPI(config.BotToken)
 	checkErr(err)
@@ -35,28 +39,48 @@ func main() {
 		}
 
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-		go analyzeUpdate(update, *bot)
+		analyzeUpdate(update, *bot)
 	}
 }
 
-func applyTestConnectionToDatabase(config Config) {
+func applyTestConnectionToDatabase(config Config) *sql.DB {
 	db, err := sql.Open("sqlite3", config.DB + "/test.db")
-	defer db.Close()
 	checkErr(err)
 
 	err = db.Ping()
 	checkErr(err)
+	return db
+}
 
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS testTable(
+func initDatabase(db *sql.DB) {
+	_, err := db.Exec(`
+	PRAGMA FOREIGN_KEYS = ON;
+
+	CREATE TABLE IF NOT EXISTS events(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		test_content TEXT
+		name TEXT,
+		chat_id INTEGER,
+		duration_s INTEGER,
+		period_s INTEGER,
+		date_s INTEGER,
+		zone_offset INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS eventAnnouncements(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		event_id INTEGER,
+		announcement TEXT,
+		relative_time_s INTEGER,
+		FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
 	)`)
 	checkErr(err)
 }
 
 func analyzeUpdate(update tgbotapi.Update, bot tgbotapi.BotAPI) {
-	var msg = ReplySame(update)
+	msg := ReplySame(update)
+	date := time.Unix(int64(update.Message.Date), 0)
+	name, offset := date.Zone()
+	log.Printf("date h=%d, m=%d, s=%d, t.n=%s, t.o=%d", date.Hour(), date.Minute(), date.Second(), name, offset)
 	if update.Message.IsCommand() {
 		log.Printf("Command: %s", update.Message.Text)
 		switch update.Message.Command() {

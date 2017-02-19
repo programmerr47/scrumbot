@@ -28,6 +28,32 @@ func (a UpdateAnalyzerCompositor) Analyze(update tgbotapi.Update) bool {
 	return false
 }
 
+type CommandAnalyzer struct {
+	bot *tgbotapi.BotAPI
+	commandRepliers map[string]Replier
+}
+
+func NewCommandAnalyzer(bot *tgbotapi.BotAPI, commandRepliers map[string]Replier) *CommandAnalyzer {
+	analyzer := new(CommandAnalyzer)
+	analyzer.bot = bot
+	analyzer.commandRepliers = commandRepliers
+	return analyzer
+}
+
+func (a CommandAnalyzer) Analyze(update tgbotapi.Update) bool {
+	if update.Message.IsCommand() {
+		commandReplier := a.commandRepliers[update.Message.Command()]
+
+		if commandReplier != nil {
+			msg := commandReplier(update)
+			a.bot.Send(msg)
+			return true
+		}
+	}
+
+	return false;
+}
+
 type ReplyUpdateAnalyzer struct {
 	bot *tgbotapi.BotAPI
 	replier Replier
@@ -45,3 +71,5 @@ func (a ReplyUpdateAnalyzer) Analyze(update tgbotapi.Update) bool {
 	a.bot.Send(msg)
 	return true
 }
+
+

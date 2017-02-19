@@ -18,6 +18,14 @@ func reply(update tgbotapi.Update, text string) tgbotapi.MessageConfig {
 	return msg
 }
 
+func ReplyStart(update tgbotapi.Update) tgbotapi.MessageConfig {
+	return message(update, randString(startAnswers))
+}
+
+func ReplyHelp(update tgbotapi.Update) tgbotapi.MessageConfig {
+	return message(update, helpAnswer)
+}
+
 func message(update tgbotapi.Update, text string) tgbotapi.MessageConfig {
 	log.Printf("Answer with text: %s", text)
 	return tgbotapi.NewMessage(update.Message.Chat.ID, text)
